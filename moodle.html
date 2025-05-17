@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Speech Test</title>
+</head>
+<body>
+    <button onclick="startRec()">Start Recording</button>
+    <p id="status">Status: Idle</p>
+    <p id="result"></p>
+    <script>
+        const statusEl = document.getElementById('status');
+        const resultEl = document.getElementById('result');
+        let recognition;
+
+        function startRec() {
+            if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+                statusEl.textContent = 'Status: Speech Recognition not supported by this browser/WebView.';
+                return;
+            }
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US'; // Or your target lang
+                recognition.interimResults = true;
+
+                recognition.onstart = () => {
+                    statusEl.textContent = 'Status: Recording...';
+                    resultEl.textContent = '';
+                };
+                recognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    resultEl.textContent = 'Heard: ' + transcript;
+                    if (event.results[event.results.length - 1].isFinal) {
+                        statusEl.textContent = 'Status: Processing final result...';
+                    }
+                };
+                recognition.onerror = (event) => {
+                    statusEl.textContent = 'Status: Error - ' + event.error;
+                    if (event.message) {
+                        statusEl.textContent += ' (' + event.message + ')';
+                    }
+                    console.error('Speech recognition error', event);
+                };
+                recognition.onend = () => {
+                    if (statusEl.textContent === 'Status: Recording...' || statusEl.textContent === 'Status: Processing final result...') {
+                        statusEl.textContent = 'Status: Ended.';
+                    }
+                     console.log('Speech recognition ended.');
+                };
+                recognition.start();
+            } catch (e) {
+                statusEl.textContent = 'Status: Error initializing - ' + e.message;
+                console.error('Error initializing speech recognition', e);
+            }
+        }
+    </script>
+</body>
+</html>
